@@ -1,0 +1,48 @@
+{
+  "name": "hub-pop",
+  "version": "1.0.0",
+  "description": "A floating GitHub card widget with liquid blob animation",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "unpkg": "dist/index.min.js",
+  "jsdelivr": "dist/index.min.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Josheqani/hub-pop.git"
+  },
+  "keywords": [
+    "github",
+    "widget",
+    "floating",
+    "card",
+    "blob",
+    "portfolio"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Josheqani/hub-pop/issues"
+  },
+  "homepage": "https://github.com/Josheqani/hub-pop#readme",
+  "devDependencies": {
+    "esbuild": "^0.28.1",
+    "typescript": "^6.0.3"
+  }
+}
