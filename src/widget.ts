@@ -1,8 +1,6 @@
 import type { HubPopOptions, HubPopInstance } from './index';
 import { getStyles } from './styles';
 
-const STYLE_ID = 'hubpop-styles';
-
 /** Official GitHub mark, inlined so the package has zero runtime deps. */
 function githubIcon(size: number): string {
   return `<svg class="hubpop-icon" width="${size}" height="${size}" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>`;
@@ -11,16 +9,6 @@ function githubIcon(size: number): string {
 /** Simple globe glyph for the website link. */
 function globeIcon(size: number): string {
   return `<svg class="hubpop-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
-}
-
-/** Inject the shared stylesheet once per document. */
-function ensureStyles(): void {
-  if (typeof document === 'undefined') return;
-  if (document.getElementById(STYLE_ID)) return;
-  const style = document.createElement('style');
-  style.id = STYLE_ID;
-  style.textContent = getStyles();
-  document.head.appendChild(style);
 }
 
 /** Build a single anchor row (icon + label) for the card. */
@@ -57,7 +45,15 @@ export function createWidget(options: HubPopOptions): HubPopInstance {
     throw new Error('[hub-pop] "name" and "github" options are required.');
   }
 
-  ensureStyles();
+  // A shadow root isolates the widget from the host page's CSS so no global
+  // stylesheet, reset, or `dir="rtl"` can alter its appearance or position.
+  const host = document.createElement('div');
+  host.className = 'hubpop-host';
+  const shadow = host.attachShadow({ mode: 'open' });
+
+  const styleEl = document.createElement('style');
+  styleEl.textContent = getStyles();
+  shadow.appendChild(styleEl);
 
   // ---- structure ----
   const root = document.createElement('div');
@@ -96,10 +92,11 @@ export function createWidget(options: HubPopOptions): HubPopInstance {
   root.appendChild(card);
   root.appendChild(tooltip);
   root.appendChild(btn);
+  shadow.appendChild(root);
 
   // ---- mount (defer until <body> exists) ----
   const mount = (): void => {
-    document.body.appendChild(root);
+    document.body.appendChild(host);
   };
   if (document.body) {
     mount();
@@ -147,7 +144,9 @@ export function createWidget(options: HubPopOptions): HubPopInstance {
   };
   const onCardClick = (e: MouseEvent): void => e.stopPropagation();
   const onDocClick = (e: MouseEvent): void => {
-    if (isOpen && !root.contains(e.target as Node)) close();
+    // Use composedPath so clicks inside the shadow root are recognised as
+    // "inside" (e.target is retargeted to the host once it leaves the shadow).
+    if (isOpen && !e.composedPath().includes(host)) close();
   };
   const onKeyDown = (e: KeyboardEvent): void => {
     if (e.key === 'Escape' && isOpen) close();
@@ -165,7 +164,7 @@ export function createWidget(options: HubPopOptions): HubPopInstance {
     document.removeEventListener('click', onDocClick);
     document.removeEventListener('keydown', onKeyDown);
     document.removeEventListener('DOMContentLoaded', mount);
-    root.remove();
+    host.remove();
   };
 
   return { open, close, toggle, destroy };

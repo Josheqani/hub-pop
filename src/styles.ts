@@ -10,11 +10,27 @@ import { blobKeyframes } from './animation';
  */
 export function getStyles(): string {
   return `
+/* Fully detach from the host page: ':host { all: initial }' stops every
+   inheritable property (direction, font, color, line-height, text-align, ...)
+   from leaking across the shadow boundary, so RTL pages or global resets can't
+   shift the widget. We then opt back into only what we need below. */
+:host {
+  all: initial;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 ${blobKeyframes}
 
 .hubpop-root {
   position: fixed;
   z-index: 2147483000;
+  direction: ltr;
+  text-align: left;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --hp-btn-bg: #24292e;
 }
